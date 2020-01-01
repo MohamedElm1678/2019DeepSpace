@@ -12,17 +12,10 @@ import java.util.Arrays;
 import com.team1323.frc2019.loops.LimelightProcessor;
 import com.team1323.frc2019.loops.LimelightProcessor.Pipeline;
 import com.team1323.frc2019.loops.Loop;
-import com.team1323.frc2019.subsystems.BallCarriage;
-import com.team1323.frc2019.subsystems.BallIntake;
-import com.team1323.frc2019.subsystems.DiskIntake;
-import com.team1323.frc2019.subsystems.DiskScorer;
-import com.team1323.frc2019.subsystems.Elevator;
-import com.team1323.frc2019.subsystems.Jacks;
-import com.team1323.frc2019.subsystems.LEDs;
 import com.team1323.frc2019.subsystems.SubsystemManager;
 import com.team1323.frc2019.subsystems.Superstructure;
 import com.team1323.frc2019.subsystems.Swerve;
-import com.team1323.frc2019.subsystems.Wrist;
+import com.team1323.frc2019.subsystems.DiskIntake;
 import com.team1323.io.SwitchController;
 import com.team1323.io.Xbox;
 import com.team1323.lib.util.Util;
@@ -46,14 +39,15 @@ public class DriverControls implements Loop {
 	Xbox driver, coDriver;
 
     private Swerve swerve;
-    private Elevator elevator;
+   /* private Elevator elevator;
     private Wrist wrist;
 	private BallIntake ballIntake;
 	private BallCarriage ballCarriage;
-	private DiskIntake diskIntake;
 	private DiskScorer diskScorer;
     private Jacks jacks;
-    private LEDs leds;
+	private LEDs leds;
+	*/
+	private DiskIntake diskIntake;
     private Superstructure s;
 
     private SubsystemManager subsystems;
@@ -80,18 +74,18 @@ public class DriverControls implements Loop {
 		coDriver.rightBumper.setLongPressDuration(1.0);
 
         swerve = Swerve.getInstance();
-		elevator = Elevator.getInstance();
+		/*elevator = Elevator.getInstance();
 		wrist = Wrist.getInstance();
 		ballIntake = BallIntake.getInstance();
 		ballCarriage = BallCarriage.getInstance();
-		diskIntake = DiskIntake.getInstance();
 		diskScorer = DiskScorer.getInstance();
         jacks = Jacks.getInstance();
-        leds = LEDs.getInstance();
+		leds = LEDs.getInstance();*/
+		diskIntake = DiskIntake.getInstance();
         s = Superstructure.getInstance();
 
         subsystems = new SubsystemManager(
-				Arrays.asList(swerve, elevator, wrist, ballIntake, ballCarriage, diskIntake, diskScorer, jacks, leds, s));
+				Arrays.asList(swerve, diskIntake,/*elevator, wrist, ballIntake, ballCarriage, diskScorer, jacks, leds,*/ s));
 
         robotState = RobotState.getInstance();
 
@@ -106,23 +100,23 @@ public class DriverControls implements Loop {
             swerve.requireModuleConfiguration();
             //swerve.set10VoltRotationMode(true);
 
-            elevator.setCurrentLimit(40);
-            elevator.configForAutoSpeed();
+           // elevator.setCurrentLimit(40);
+            //elevator.configForAutoSpeed();
 
 		    s.enableCompressor(false);
         } else {
             s.enableCompressor(true);
             swerve.setNominalDriveOutput(0.0);
             swerve.set10VoltRotationMode(false);
-            elevator.setCurrentLimit(40);
+         /*   elevator.setCurrentLimit(40);
             elevator.configForTeleopSpeed();
             wrist.setHighGear(true);
             wrist.setAngle(Constants.kWristBallFeedingAngle);
             if(diskScorer.hasDisk())
                 diskScorer.conformToState(DiskScorer.State.HOLDING);
-                
+                */
             robotState.enableXTarget(false);
-            leds.conformToState(LEDs.State.ENABLED);
+            //leds.conformToState(LEDs.State.ENABLED);
         }
     }
 
@@ -130,9 +124,9 @@ public class DriverControls implements Loop {
     public void onLoop(double timestamp) {
         if(inAuto) {
             if(s.swerve.getState() == Swerve.ControlState.VISION_TRAJECTORY){
-                leds.conformToState(LEDs.State.TARGET_VISIBLE);
+              //  leds.conformToState(LEDs.State.TARGET_VISIBLE);
             }else{
-                leds.conformToState(LEDs.State.ENABLED);
+            //    leds.conformToState(LEDs.State.ENABLED);
             }
         } else {
             driver.update();
@@ -145,7 +139,7 @@ public class DriverControls implements Loop {
     @Override
     public void onStop(double timestamp) {
         subsystems.stop();
-        leds.conformToState(LEDs.State.RAINBOW);
+       // leds.conformToState(LEDs.State.RAINBOW);
     }
 
     private void twoControllerMode() {
@@ -201,7 +195,7 @@ public class DriverControls implements Loop {
 			swerve.resetAveragedDirection();
 		} else if (driver.startButton.shortReleased()) {
 			if(!swerve.isTracking()){
-				diskScorer.loseDisk();
+			//	diskScorer.loseDisk();
 				limelight.setPipeline(Pipeline.CLOSEST);
 				s.humanLoaderRetrievingState();
 			}
@@ -213,7 +207,7 @@ public class DriverControls implements Loop {
 
 		//s.sendManualInput(-coDriver.getY(Hand.kLeft), -coDriver.getY(Hand.kRight), /*-coDriver.getY(Hand.kLeft)*/0.0);
 
-		double leftStick = coDriver.getY(Hand.kLeft);
+/*		double leftStick = coDriver.getY(Hand.kLeft);
 		double rightStick = coDriver.getY(Hand.kRight);
 
 		if(Math.abs(leftStick) != 0){
@@ -395,7 +389,8 @@ public class DriverControls implements Loop {
         } else {
             leds.conformToState(LEDs.State.ENABLED);
         }
-    }
+*/
+	}
 
     private void oneControllerMode() {
 

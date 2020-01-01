@@ -53,7 +53,7 @@ public class Swerve extends Subsystem{
 	List<SwerveDriveModule> positionModules;
 
 	//Dat elevator
-	Elevator elevator;
+//	Elevator elevator;
 	
 	//Evade maneuver variables
 	Translation2d clockwiseCenter = new Translation2d();
@@ -214,7 +214,7 @@ public class Swerve extends Subsystem{
 
 		generator = TrajectoryGenerator.getInstance();
 
-		elevator = Elevator.getInstance();
+	//	elevator = Elevator.getInstance();
 
 		lateralPID.setSetpoint(0.0);
 		forwardPID.setSetpoint(0.0);
@@ -663,7 +663,7 @@ public class Swerve extends Subsystem{
 						visionUpdateRequested = true;
 						System.out.println("Vision delayed until next cycle");
 					}else{
-						visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
+						//visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
 						if(vState == VisionState.CURVED)
 							setCurvedVisionTrajectory(aim.get().getRange() * 0.5, aim, endTranslation, override);
 						else
@@ -692,7 +692,7 @@ public class Swerve extends Subsystem{
 						initialVisionDistance = aim.get().getRange();
 						latestAim = aim.get();
 					}
-					visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
+					// visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
 					if(vState == VisionState.CURVED)
 						setCurvedVisionTrajectory(aim.get().getRange() * 0.5, aim, endTranslation, false);
 					else
@@ -993,7 +993,7 @@ public class Swerve extends Subsystem{
 			break;
 		case VISION_TRAJECTORY:
 			if(!motionPlanner.isDone()){
-				visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
+				//visionUpdatesAllowed = elevator.inVisionRange(robotHasDisk ? Constants.kElevatorDiskVisibleRanges : Constants.kElevatorBallVisibleRanges);
 				Optional<ShooterAimingParameters> aim = robotState.getAimingParameters();
 				if(aim.isPresent() && visionUpdatesAllowed && firstVisionCyclePassed){
 					visionVisibleCycles++;

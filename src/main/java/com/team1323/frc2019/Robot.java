@@ -10,12 +10,10 @@ package com.team1323.frc2019;
 import com.team1323.frc2019.auto.AutoModeBase;
 import com.team1323.frc2019.auto.AutoModeExecuter;
 import com.team1323.frc2019.auto.SmartDashboardInteractions;
-import com.team1323.frc2019.auto.modes.CloseFarBallMode;
 import com.team1323.frc2019.loops.LimelightProcessor;
 import com.team1323.frc2019.loops.Looper;
 import com.team1323.frc2019.loops.QuinticPathTransmitter;
 import com.team1323.frc2019.loops.RobotStateEstimator;
-import com.team1323.frc2019.subsystems.LEDs;
 import com.team1323.frc2019.subsystems.SubsystemManager;
 import com.team1323.frc2019.subsystems.Superstructure;
 import com.team1323.lib.util.CrashTracker;
@@ -40,7 +38,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 	private Superstructure s;
 	private SubsystemManager subsystems;
-	private LEDs leds;
 
 	private AutoModeExecuter autoModeExecuter = null;
 	private TrajectoryGenerator generator = TrajectoryGenerator.getInstance();
@@ -66,7 +63,6 @@ public class Robot extends TimedRobot {
 
 		s = Superstructure.getInstance();
 		subsystems = driverControls.getSubsystems();
-		leds = LEDs.getInstance();
 
 
 		Logger.clearLog();
@@ -94,9 +90,9 @@ public class Robot extends TimedRobot {
 
 		generator.generateTrajectories();
 
-		AutoModeBase auto = new CloseFarBallMode(true);
-		qTransmitter.addPaths(auto.getPaths());
-		System.out.println("Total path time: " + qTransmitter.getTotalPathTime(auto.getPaths()));
+	//	AutoModeBase auto = new CloseFarBallMode(true);
+		//qTransmitter.addPaths(auto.getPaths());
+	//	System.out.println("Total path time: " + qTransmitter.getTotalPathTime(auto.getPaths()));
 
 	}
 
@@ -167,7 +163,7 @@ public class Robot extends TimedRobot {
 			enabledLooper.stop();
 			subsystems.stop();
 			disabledLooper.start();
-			leds.conformToState(LEDs.State.RAINBOW);
+		//	leds.conformToState(LEDs.State.RAINBOW);
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;
@@ -180,8 +176,8 @@ public class Robot extends TimedRobot {
 			disabledLooper.outputToSmartDashboard();
 			smartDashboardInteractions.output();
 			Settings.update();
-			if(subsystems.haveEmergency())
-				leds.conformToState(LEDs.State.EMERGENCY);
+		//	if(subsystems.haveEmergency())
+		//		leds.conformToState(LEDs.State.EMERGENCY);
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t);
 			throw t;

@@ -1,6 +1,5 @@
 package com.team1323.frc2019.auto;
 
-import com.team1323.frc2019.auto.actions.Action;
 import com.team254.lib.geometry.Pose2dWithCurvature;
 import com.team254.lib.trajectory.timing.TimedState;
 

@@ -9,9 +9,7 @@ package com.team1323.frc2019.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.team1323.frc2019.Ports;
-import com.team1323.frc2019.Settings;
 import com.team1323.frc2019.loops.ILooper;
 import com.team1323.frc2019.loops.Loop;
 import com.team1323.frc2019.subsystems.Subsystem;
@@ -21,16 +19,17 @@ import com.team254.drivers.LazyTalonSRX;
 import com.team1323.frc2019.Constants;
 
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
- * Manages the ground disk intake
+ * Manages the disk intake
  **/
 public class DiskIntake extends Subsystem {
   private static DiskIntake instance = null;
+  private PowerDistributionPanel pdp;
   public static DiskIntake getInstance() {
     if(instance == null) 
       instance = new DiskIntake();
@@ -45,63 +44,69 @@ public class DiskIntake extends Subsystem {
     hasDisk = false;
   }
 
-  private LazyTalonSRX diskMotor;
+  private LazyTalonSRX pumpMotor;
   public LazyTalonSRX getTalon(){
-    return diskMotor;
+    return pumpMotor;
   }
 
-  private Solenoid lift;
+  private Solenoid extend;
+  private Solenoid release;
 
   private DiskIntake() {
-    diskMotor = new LazyTalonSRX(Ports.DISK_INTAKE);
-    lift = new Solenoid(Ports.DRIVEBASE_PCM, Ports.DISK_INTAKE_LIFT);
+    pumpMotor = new LazyTalonSRX(Ports.DISK_INTAKE);
+    extend = new Solenoid(Ports.DRIVEBASE_PCM, Ports.DISK_INTAKE_EXTEND);
+    release = new Solenoid(Ports.DRIVEBASE_PCM, Ports.DISK_INTAKE_RELEASE);
 
-    diskMotor.setInverted(false);
+    pdp = new PowerDistributionPanel();
+    pumpMotor.configFactoryDefault();
 
-    diskMotor.setNeutralMode(NeutralMode.Brake);
+    pumpMotor.setInverted(false);
 
-    diskMotor.configVoltageCompSaturation(12.0, 10);
-    diskMotor.enableVoltageCompensation(true);
+    pumpMotor.setNeutralMode(NeutralMode.Brake);
+
+    pumpMotor.configVoltageCompSaturation(12.0, 10);
+    pumpMotor.enableVoltageCompensation(true);
+
   }
 
   private void configureTalon(){
-    diskMotor.configForwardSoftLimitEnable(false);
-    diskMotor.configReverseSoftLimitEnable(false);
+    pumpMotor.configForwardSoftLimitEnable(false);
+    pumpMotor.configReverseSoftLimitEnable(false);
 
-    setCurrentLimit(Constants.kJackCurrentLimit);
+    setCurrentLimit(20);
   }
 
   public void setCurrentLimit(int amps) {
-    diskMotor.configContinuousCurrentLimit(amps, 10);
-    diskMotor.configPeakCurrentLimit(amps, 10);
-    diskMotor.configPeakCurrentDuration(10, 10);
-    diskMotor.enableCurrentLimit(true);
+    pumpMotor.configContinuousCurrentLimit(amps, 10);
+    pumpMotor.configPeakCurrentLimit(amps, 10);
+    pumpMotor.configPeakCurrentDuration(10, 10);
+    pumpMotor.enableCurrentLimit(true);
   }
 
   public void enableCurrentLimit(boolean enable) {
-    diskMotor.enableCurrentLimit(enable);
+    pumpMotor.enableCurrentLimit(enable);
   }
 
   private void setRampRate(double secondsToMax) {
-    diskMotor.configOpenloopRamp(secondsToMax, 0);
+    pumpMotor.configOpenloopRamp(secondsToMax, 0);
   }
 
   public enum State {
-    OFF(0, true), 
-    INTAKING(Constants.kDiskIntakingOutput, false), 
-    EJECTING(Constants.kDiskIntakeStrongEjectOutput, false), 
-    HANDOFF_COMPLETE(0, true), 
-    HOLDING(Constants.kDiskStrongHoldingOutput, true),
-    DEPLOYED(0, false),
-    DELIVERING(4.0/12.0, true),
-    DISABLED(0.0, true);
+    OFF(0, false, false), 
+    INTAKING(Constants.kPumpBuildOutput, true, false),
+    BUILDING_PRESSURE(Constants.kPumpBuildOutput, false, false),
+    HOLDING(Constants.kPumpBuildOutput, false, false),
+    PREPPING_SCORE(Constants.kPumpBuildOutput, true, false),
+    SCORING(0, true, true);
 
-    public double diskIntakeOutput = 0;
-    public boolean lifted = false;
+    public double pumpPower = 0;
+    public boolean extended = false;
+    public boolean released = false;
 
-    private State(double output, boolean lift) {
-      diskIntakeOutput = output;
-      lifted = lift;
+    private State(double output, boolean extend, boolean release) {
+      pumpPower = output;
+      extended = extend;
+      released = release;
     }
 
   }
@@ -114,8 +119,6 @@ public class DiskIntake extends Subsystem {
   private double stateEnteredTimestamp = 0;
   private boolean stateChanged = false;
   private double currentSpikeTimestamp = Double.POSITIVE_INFINITY;
-  private boolean isResucking = false;
-  private double holdingOutput = Constants.kDiskIntakeWeakEjectOutput;
   private boolean needsToNotifyDrivers = false;
 
   private synchronized void setState(State newState) {
@@ -126,10 +129,6 @@ public class DiskIntake extends Subsystem {
     stateEnteredTimestamp = Timer.getFPGATimestamp();
   }
 
-  public void setHoldingOutput(double output) {
-    holdingOutput = output;
-  }
-
   public boolean needsToNotifyDivers() {
     if (needsToNotifyDrivers) {
       needsToNotifyDrivers = false;
@@ -138,27 +137,22 @@ public class DiskIntake extends Subsystem {
     return false;
   }
 
-  public void fireLift(boolean fire) {
-    lift.set(!fire);
+  public void fireExtend(boolean fire) {
+    extend.set(fire);
   }
 
-  private void setRollers(double speed) {
+  public boolean isExtended() {
+    return currentState.extended;
+  }
+
+  public void fireRelease(boolean fire) {
+    release.set(fire);
+  }
+
+  private void setPump(double power) {
     setRampRate(0.0);
-    diskMotor.set(ControlMode.PercentOutput, speed);
+    pumpMotor.set(ControlMode.PercentOutput, power);
   }
-
-  private void holdRollers() {
-    setRollers(holdingOutput);
-  }
-
-  boolean hasPower = true;
-  public void shiftPower(boolean shiftToJacks){
-    hasPower = !shiftToJacks;
-    conformToState(shiftToJacks ? State.DISABLED : State.OFF);
-    if(!shiftToJacks)
-      configureTalon();
-  }
-
   private final Loop loop = new Loop() {
 
     @Override
@@ -174,50 +168,19 @@ public class DiskIntake extends Subsystem {
 
       switch (currentState) {
         case OFF:
-          
-          break;
-        case INTAKING:
-          if(stateChanged)
-            hasDisk = false;
-          if(diskMotor.getOutputCurrent() >= 10.0 && (timestamp - stateEnteredTimestamp) >= 0.5) {
-            if(Double.isInfinite(currentSpikeTimestamp)) {
-              currentSpikeTimestamp = timestamp;
-            } else {
-              if(timestamp - currentSpikeTimestamp > 0.375) {
-                hasDisk = true;
-                needsToNotifyDrivers = true;
-              }
-            }
-          } else if (!Double.isInfinite(currentSpikeTimestamp)) {
-            currentSpikeTimestamp = Double.POSITIVE_INFINITY;
+          if (hasDisk()) {
+            conformToState(State.HOLDING);
           }
           break;
-        case EJECTING:
+        case SCORING:
           if(stateChanged) {
-            //setRampRate(0.0);
             hasDisk = false;
           }
           if (timestamp - stateEnteredTimestamp > 2.0) {
             stop();
-            //setRampRate(Constants.kDiskIntakeRampRate);
           }
           break;
-        case HANDOFF_COMPLETE:
-          if(stateChanged)
-            hasDisk = false;
-          break;
         case HOLDING:
-          /*if(banner.get()) {
-            if(isResucking) {
-              holdRollers();
-              isResucking = false;
-            }
-          } else {
-            if (!isResucking) {
-              setRollers(Constants.kDiskIntakingResuckingOutput);
-              isResucking = true;
-            }
-          }*/
           break;
         default:
           break;
@@ -225,7 +188,6 @@ public class DiskIntake extends Subsystem {
 
       if(stateChanged)
         stateChanged = false;
-
     }
 
     @Override
@@ -236,25 +198,21 @@ public class DiskIntake extends Subsystem {
 
   };
 
-  public void eject(double output) {
-    setState(State.EJECTING);
-    setRollers(output);
-    fireLift(false);
+  public void drop() {
+    setState(State.OFF);
+    fireRelease(true);
     hasDisk = false;
   }
 
   public void conformToState(State desiredState) {
-    conformToState(desiredState, desiredState.diskIntakeOutput);
+    conformToState(desiredState, desiredState.pumpPower);
   }
 
   public void conformToState(State desiredState, double outputOverride) {
-    if(hasPower || (!hasPower && desiredState == State.DISABLED)){
-      setState(desiredState);
-      setRollers(outputOverride);
-      fireLift(desiredState.lifted);
-    }else{
-      DriverStation.reportError("Disk intake state change not allowed", false);
-    }
+    setState(desiredState);
+    setPump(outputOverride);
+    fireExtend(desiredState.extended);
+    fireRelease(desiredState.released);
   }
 
   public Request stateRequest(State desiredState) {
@@ -283,12 +241,12 @@ public class DiskIntake extends Subsystem {
     };
   }
 
-  public Request ejectRequest(double output) {
+  public Request scoreRequest(double output) {
     return new Request(){
     
       @Override
       public void act() {
-        conformToState(State.EJECTING, output);
+        conformToState(State.SCORING, output);
       }
 
     };
@@ -317,11 +275,13 @@ public class DiskIntake extends Subsystem {
   @Override
   public void outputTelemetry() {
     SmartDashboard.putString("Disk intake state", currentState.toString());
-    if(Settings.debugIntakes()) {
-      SmartDashboard.putNumber("Disk Intake Current", diskMotor.getOutputCurrent());
-      SmartDashboard.putNumber("Disk Intake Voltage", diskMotor.getMotorOutputVoltage());
+    SmartDashboard.putNumber("Disk Intake Pump Current", pumpMotor.getOutputCurrent());
+    SmartDashboard.putNumber("Disk Intake Pump Current Talon", pdp.getCurrent(3));
+   /* if(Constants.kDebuggingOutput) {
+      SmartDashboard.putNumber("Disk Intake Pump Current", pumpMotor.getOutputCurrent());
+      SmartDashboard.putNumber("Disk Intake Pump Voltage", pumpMotor.getMotorOutputVoltage());
       SmartDashboard.putBoolean("Disk Intake Has Disk", hasDisk);
-    }
+    }*/
 
   }
 }

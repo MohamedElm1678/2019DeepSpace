@@ -17,8 +17,8 @@ public class Constants {
 	public static final double kEpsilon = 0.0001;
 	
 	//Physical Robot Dimensions (including bumpers)
-	public static final double kRobotWidth = 36.5;
-	public static final double kRobotLength = 36.5;
+	public static final double kRobotWidth = 17.5;
+	public static final double kRobotLength = 17.5;
 	public static final double kRobotHalfWidth = kRobotWidth / 2.0;
 	public static final double kRobotHalfLength = kRobotLength / 2.0;
 	public static final double kRobotProbeExtrusion = 4.0;
@@ -77,6 +77,10 @@ public class Constants {
 	public static final double kDefaultVisionTrackingSpeed = 42.0;
 	public static final double kCurvedVisionYOffset = 0.375;//1.25
 
+	//Disk Intake Constants
+	public static final double kPumpHoldOutput = 0.0;
+	public static final double kPumpBuildOutput = 1.0;
+
 	//Vision Speed Constraint Treemap
 	public static InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> kVisionSpeedTreemap = new InterpolatingTreeMap<>();
 	static{
@@ -98,10 +102,10 @@ public class Constants {
     public static final double kSwerveRotationSpeedScalar = ((1.0 / 0.125) - 1.0) / kSwerveMaxSpeedInchesPerSecond;
     
     //Swerve Module Wheel Offsets (Rotation encoder values when the wheels are facing 0 degrees)
-	public static final int kFrontRightEncoderStartingPos = Settings.kIsUsingCompBot ? -1403 - 1024 : 1740 - 1024;
-	public static final int kFrontLeftEncoderStartingPos = Settings.kIsUsingCompBot ? -2171 - 1024 : -2895 - 1024;
-	public static final int kRearLeftEncoderStartingPos = Settings.kIsUsingCompBot ? -1327 - 1024 : 1055 - 1024;
-	public static final int kRearRightEncoderStartingPos = Settings.kIsUsingCompBot ? -5953 - 1024 : 975 - 1024;
+	public static final int kFrontRightEncoderStartingPos = -262;
+	public static final int kFrontLeftEncoderStartingPos = -2213;
+	public static final int kRearLeftEncoderStartingPos = -3906;
+	public static final int kRearRightEncoderStartingPos = -2398;
 	
 	//Swerve Module Positions (relative to the center of the drive base)
 	public static final Translation2d kVehicleToModuleZero = new Translation2d(kWheelbaseLength/2, kWheelbaseWidth/2);

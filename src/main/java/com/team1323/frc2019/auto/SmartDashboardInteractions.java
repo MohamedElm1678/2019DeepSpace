@@ -1,10 +1,6 @@
 package com.team1323.frc2019.auto;
 
-import com.team1323.frc2019.auto.modes.CloseFarBallMode;
-import com.team1323.frc2019.auto.modes.CloseMidShipMode;
-import com.team1323.frc2019.auto.modes.MidCloseShipMode;
-import com.team1323.frc2019.auto.modes.StandStillMode;
-import com.team1323.frc2019.auto.modes.TwoCloseOneBallMode;
+
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -84,14 +80,7 @@ public class SmartDashboardInteractions {
     
     private AutoModeBase createAutoMode(AutoOption option, boolean left){
     	switch(option){
-			case TWO_CLOSE_ONE_BALL:
-                return new TwoCloseOneBallMode(left);
-            case CLOSE_FAR_BALL:
-                return new CloseFarBallMode(left);
-            case MID_CLOSE_SHIP:
-                return new MidCloseShipMode(left);
-            case CLOSE_MID_SHIP:
-                return new CloseMidShipMode(left);
+			
             default:
                 System.out.println("ERROR: unexpected auto mode: " + option);
                 return new StandStillMode();
